@@ -38,8 +38,6 @@ func TestGetAPIKey(t *testing.T) {
 			expectErr: "not expecting an error",
 		},
 	}
-	return
-
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("TestGetAPIKey Case #%v:", i), func(t *testing.T) {
 			header := http.Header{}
