@@ -21,9 +21,11 @@ jobs:
         with:
           go-version: "1.25.1"
 
+# Create docker container
       - name: Build app
         run: ./scripts/buildprod.sh
 
+# Docker image to ECR
       - name: Debug OIDC token
         run: |
               curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
@@ -45,3 +47,37 @@ jobs:
           echo "Building and pushing image: $IMAGE_URI"
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
+
+
+# Terraform for EC2 automation
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.5
+
+      - name: Export GitHub Secrets to TF vars
+        run: |
+          echo "TF_VAR_aws_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
+          echo "TF_VAR_aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_ecr_repository=${{ secrets.ECR_REPOSITORY }}" >> $GITHUB_ENV
+          echo "TF_VAR_ec2_public_key='${{ secrets.EC2_PUBLIC_KEY }}'" >> $GITHUB_ENV
+          echo "TF_VAR_ec2_key_name=notely-key" >> $GITHUB_ENV
+          echo "TF_VAR_ami_id=${{ secrets.AMI_ID }}" >> $GITHUB_ENV
+          echo "TF_VAR_ec2_instance_type=${{ secrets.EC2_INSTANCE_TYPE }}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+# Update docker on ec2
+      - name: Update Docker container on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i <(echo "${{ secrets.EC2_PRIVATE_KEY }}") ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+            docker stop notely || true
+            docker rm notely || true
+            docker run -d --restart unless-stopped -p 80:80 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          EOF
+        shell: bash
