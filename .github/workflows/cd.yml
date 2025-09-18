@@ -51,5 +51,5 @@ jobs:
         run: |
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
           echo "Building and pushing image: $IMAGE_URI"
-          docker build -t $IMAGE_URI .
+          docker build -t $IMAGE_URI ./bin
           docker push $IMAGE_URI
