@@ -10,3 +10,4 @@ variable "ec2_instance_type" {
 variable "ami_id" {}
 variable "ec2_public_key" {}
 variable "ec2_key_name" {}
+variable "security_group_id" {}
