@@ -21,17 +21,6 @@ jobs:
       - name: Build app
         run: ./scripts/buildprod.sh
 
-
-  build-and-push:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write   
-      contents: read
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Debug OIDC token
         run: |
               curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
