@@ -60,8 +60,7 @@ jobs:
           echo "TF_VAR_aws_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
           echo "TF_VAR_aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
           echo "TF_VAR_ecr_repository=${{ secrets.ECR_REPOSITORY }}" >> $GITHUB_ENV
-          echo "TF_VAR_ec2_public_key=${{ secrets.EC2_PUBLIC_KEY }}" >> $GITHUB_ENV
-          echo "TF_VAR_ec2_key_name=notely-key" >> $GITHUB_ENV
+          echo "TF_VAR_ec2_key_name=${{ secrets.KEY_NAME }}" >> $GITHUB_ENV
           echo "TF_VAR_ami_id=${{ secrets.AMI_ID }}" >> $GITHUB_ENV
           echo "TF_VAR_ec2_instance_type=${{ secrets.EC2_INSTANCE_TYPE }}" >> $GITHUB_ENV
           echo "TF_VAR_security_group_id=${{ secrets.SECURITY_GROUP_ID }}" >> $GITHUB_ENV
@@ -77,10 +76,15 @@ jobs:
 # Update docker on ec2
       - name: Update Docker container on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i <(echo "${{ secrets.EC2_PRIVATE_KEY }}") ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            # Write private key to a temp file
+            echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
+            chmod 600 private_key.pem
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+            
             docker stop notely || true
             docker rm notely || true
             docker run -d --restart unless-stopped -p 80:80 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-          EOF
+            EOF
+            rm private_key.pem
         shell: bash
