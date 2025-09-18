@@ -72,8 +72,8 @@ jobs:
       - name: Terraform Apply
         id: terraform_apply
         run: |
-          terraform apply -auto-approve -no-color | tee apply_output.txt
-          echo "EC2_PUBLIC_IP=$(grep 'ec2_public_ip' apply_output.txt | cut -d '=' -f 2 | tr -d ' ')" >> $GITHUB_ENV
+          terraform apply -auto-approve -no-color
+          echo "EC2_PUBLIC_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
         working-directory: ./terraform
 
 # Update docker on ec2
