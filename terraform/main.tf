@@ -44,7 +44,7 @@ resource "aws_security_group" "notely_sg" {
 
 
 # Key pair public key
-resource "aws_instance" "notely_key" {
+resource "aws_key_pair" "notely_key" {
   key_name = var.ec2_key_name
   public_key = var.ec2_public_key
 }
