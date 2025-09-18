@@ -67,9 +67,11 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        working-directory: ./terraform
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        working-directory: ./terraform
 
 # Update docker on ec2
       - name: Update Docker container on EC2
