@@ -14,18 +14,11 @@ provider "aws" {
 }
 
 
-# Key pair public key
-resource "aws_key_pair" "notely_key" {
-  key_name = var.ec2_key_name
-  public_key = var.ec2_public_key
-}
-
-
 # EC2 instance
 resource "aws_instance" "notely_ec2" {
   ami = var.ami_id
   instance_type = var.ec2_instance_type
-  key_name = aws_key_pair.notely_key.key_name
+  key_name = var.ec2_key_name
   vpc_security_group_ids = [var.security_group_id]
 
   user_data = <<-EOF
