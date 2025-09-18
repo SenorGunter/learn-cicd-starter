@@ -70,7 +70,10 @@ jobs:
         working-directory: ./terraform
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        id: terraform_apply
+        run: |
+          terraform apply -auto-approve -no-color | tee apply_output.txt
+          echo "EC2_PUBLIC_IP=$(grep 'ec2_public_ip' apply_output.txt | cut -d '=' -f 2 | tr -d ' ')" >> $GITHUB_ENV
         working-directory: ./terraform
 
 # Update docker on ec2
@@ -79,12 +82,12 @@ jobs:
             # Write private key to a temp file
             echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
             chmod 600 private_key.pem
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} << 'EOF'
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
             
             docker stop notely || true
             docker rm notely || true
-            docker run -d --restart unless-stopped -p 80:80 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+            docker run -d --restart unless-stopped -p 80:80 --name notely ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
             EOF
             rm private_key.pem
         shell: bash
