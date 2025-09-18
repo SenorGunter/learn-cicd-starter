@@ -13,35 +13,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Security Groups
-resource "aws_security_group" "notely_sg" {
-  name = "notely_sg"
-  description = "Allow HTTP and SSH"
-
-  ingress {
-    description = "HTTP"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "SSH"
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 
 # Key pair public key
 resource "aws_key_pair" "notely_key" {
