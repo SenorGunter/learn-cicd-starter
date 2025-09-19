@@ -77,19 +77,22 @@ jobs:
         id: get-ip
         working-directory: ./terraform
         run: |
+          # Get the IP address from the state file and clean it
           PUBLIC_IP=$(terraform state show 'aws_instance.notely_ec2' | grep 'public_ip' | awk '{print $NF}' | tr -d '"')
-          echo "ec2_public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          # Use printf to write the cleaned variable to the output file
+          printf "ec2_public_ip=%s\n" "$PUBLIC_IP" >> $GITHUB_OUTPUT
 
+# Update docker on ec2
       - name: Update Docker container on EC2
         run: |
+          # Write private key to a temp file
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
- 
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ steps.get-ip.outputs.ec2_public_ip }} "
-            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest && \
+          # Use the cleaned step output from the previous step
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ steps.get-ip.outputs.ec2_public_ip }} \
+            "docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest && \
             docker stop notely || true && \
             docker rm notely || true && \
-            docker run -d --restart unless-stopped -p 80:80 --name notely ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-          "
+            docker run -d --restart unless-stopped -p 80:80 --name notely ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest"
           rm -f private_key.pem
         shell: bash
