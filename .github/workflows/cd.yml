@@ -77,8 +77,10 @@ jobs:
         id: get-ip
         working-directory: ./terraform
         run: |
-          PUBLIC_IP=$(terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
-          echo "ec2_public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          PUBLIC_IP=$(terraform output -raw ec2_public_ip)
+          echo "ec2_public_ip<<EOF" >> $GITHUB_OUTPUT
+          echo "$PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
 # Update docker on ec2
       - name: Update Docker container on EC2
