@@ -77,8 +77,7 @@ jobs:
         id: get-ip
         working-directory: ./terraform
         run: |
-          # Get the IP address directly from the state file
-          PUBLIC_IP=$(terraform state show 'aws_instance.notely_ec2' | grep 'public_ip' | awk '{print $NF}')
+          PUBLIC_IP=$(terraform state show 'aws_instance.notely_ec2' | grep 'public_ip' | awk '{print $NF}' | tr -d '"')
           echo "ec2_public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
       - name: Update Docker container on EC2
