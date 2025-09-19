@@ -77,10 +77,16 @@ jobs:
         id: get-ip
         working-directory: ./terraform
         run: |
-          PUBLIC_IP=$(terraform output -raw ec2_public_ip)
-          # Use awk to aggressively trim whitespace and ensure a clean string
-          CLEAN_IP=$(echo "$PUBLIC_IP" | awk '{$1=$1};1')
-          echo "ec2_public_ip=$CLEAN_IP" >> $GITHUB_OUTPUT
+          # Write private key to a temp file
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ steps.get-ip.outputs.ec2_public_ip }} \
+            "docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest && \
+            docker stop notely || true && \
+            docker rm notely || true && \
+            docker run -d --restart unless-stopped -p 80:80 --name notely ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest"
+          rm -f private_key.pem
+        shell: bash
 
       - name: Update Docker container on EC2
         run: |
