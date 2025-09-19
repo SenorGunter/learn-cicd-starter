@@ -34,9 +34,7 @@ resource "aws_instance" "notely_ec2" {
               docker stop notely || true
               docker rm notely || true
               docker run -d --restart unless-stopped -p 80:80 --name notely ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository}:latest
-              cd /
-              go build -o notely
-              ./notely &
+
 							EOF
 
   tags = {

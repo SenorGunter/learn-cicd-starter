@@ -26,7 +26,7 @@ jobs:
 
 # Create docker container
       - name: Build app
-        run: ./scripts/buildprod.sh
+        run: PORT=80 ./scripts/buildprod.sh
 
 #Migrate Database
       - name: Migrate Database
