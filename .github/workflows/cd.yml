@@ -64,8 +64,6 @@ jobs:
           echo "TF_VAR_ami_id=${{ secrets.AMI_ID }}" >> $GITHUB_ENV
           echo "TF_VAR_ec2_instance_type=${{ secrets.EC2_INSTANCE_TYPE }}" >> $GITHUB_ENV
           echo "TF_VAR_security_group_id=${{ secrets.SECURITY_GROUP_ID }}" >> $GITHUB_ENV
-          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-
 
       - name: Terraform Init
         run: terraform init
@@ -75,20 +73,12 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -auto-approve -no-color -var "subnet_id=${{ secrets.EC2_SUBNET_ID }}"
 
-      - name: Save EC2 public IP to file
+      - name: Get EC2 Public IP
+        id: get-ip
         working-directory: ./terraform
-        run: terraform output -raw ec2_public_ip > ec2_ip.txt
-
-      - name: Set EC2_PUBLIC_IP for GitHub Actions
         run: |
-          PUBLIC_IP=$(head -n 1 ./terraform/ec2_ip.txt | tr -d '\r\n')
-          if [[ ! $PUBLIC_IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "ERROR: Invalid public IP: $PUBLIC_IP"
-            exit 1
-          fi
-            echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-
-
+          PUBLIC_IP=$(terraform output -raw ec2_public_ip)
+          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
 # Update docker on ec2
       - name: Update Docker container on EC2
