@@ -77,16 +77,16 @@ jobs:
         id: get-ip
         working-directory: ./terraform
         run: |
-          PUBLIC_IP=$(terraform output -raw ec2_public_ip)
+          terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' > ec2_ip.txt
+          
+          PUBLIC_IP=$(cat ec2_ip.txt)
           echo "ec2_public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
       - name: Update Docker container on EC2
         run: |
-          # Write private key to a temp file
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
-          
-          # The variable is now directly available as a step output
+ 
           ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ steps.get-ip.outputs.ec2_public_ip }} "
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest && \
             docker stop notely || true && \
