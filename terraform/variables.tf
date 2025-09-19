@@ -10,3 +10,7 @@ variable "ec2_instance_type" {
 variable "ami_id" {}
 variable "ec2_key_name" {}
 variable "security_group_id" {}
+variable "subnet_id" {
+  type        = string
+  description = "The subnet ID where the EC2 instance will be launched"
+}
