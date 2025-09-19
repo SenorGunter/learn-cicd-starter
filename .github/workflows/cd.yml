@@ -78,27 +78,20 @@ jobs:
         working-directory: ./terraform
         run: |
           PUBLIC_IP=$(terraform output -raw ec2_public_ip)
-          echo "ec2_public_ip<<EOF" >> $GITHUB_OUTPUT
-          echo "$PUBLIC_IP" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-# Update docker on ec2
+          echo "ec2_public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+
       - name: Update Docker container on EC2
         run: |
           # Write private key to a temp file
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
-          # Store the IP in a shell variable to ensure it is clean
-          EC2_IP="${{ steps.get-ip.outputs.ec2_public_ip }}"
-          # Check if the IP address is valid
-          if [[ ! "$EC2_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Invalid public IP: $EC2_IP"
-            exit 1
-          fi
-          echo "Connecting to EC2 instance with IP: $EC2_IP"
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@"$EC2_IP" \
-            "docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest && \
+          
+          # The variable is now directly available as a step output
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ steps.get-ip.outputs.ec2_public_ip }} "
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest && \
             docker stop notely || true && \
             docker rm notely || true && \
-            docker run -d --restart unless-stopped -p 80:80 --name notely ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest"
+            docker run -d --restart unless-stopped -p 80:80 --name notely ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          "
           rm -f private_key.pem
         shell: bash
