@@ -14,3 +14,4 @@ variable "subnet_id" {
   type        = string
   description = "The subnet ID where the EC2 instance will be launched"
 }
+variable ""
