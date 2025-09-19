@@ -77,10 +77,10 @@ jobs:
         id: get-ip
         working-directory: ./terraform
         run: |
-          terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' > ec2_ip.txt
-          
-          PUBLIC_IP=$(cat ec2_ip.txt)
-          echo "ec2_public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          PUBLIC_IP=$(terraform output -raw ec2_public_ip)
+          # Use awk to aggressively trim whitespace and ensure a clean string
+          CLEAN_IP=$(echo "$PUBLIC_IP" | awk '{$1=$1};1')
+          echo "ec2_public_ip=$CLEAN_IP" >> $GITHUB_OUTPUT
 
       - name: Update Docker container on EC2
         run: |
