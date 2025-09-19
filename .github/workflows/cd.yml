@@ -64,6 +64,8 @@ jobs:
           echo "TF_VAR_ami_id=${{ secrets.AMI_ID }}" >> $GITHUB_ENV
           echo "TF_VAR_ec2_instance_type=${{ secrets.EC2_INSTANCE_TYPE }}" >> $GITHUB_ENV
           echo "TF_VAR_security_group_id=${{ secrets.SECURITY_GROUP_ID }}" >> $GITHUB_ENV
+          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
 
       - name: Terraform Init
         run: terraform init
