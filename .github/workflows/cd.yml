@@ -81,7 +81,11 @@ jobs:
           terraform output -raw ec2_public_ip > ec2_ip.txt
       - name: Set GitHub environment
         run: |
-          PUBLIC_IP=$(cat ./terraform/ec2_ip.txt | tr -d '\r\n')
+          PUBLIC_IP=$(head -n 1 ./terraform/ec2_ip.txt | tr -d '\r\n')
+          if [[ ! $PUBLIC_IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: Invalid public IP: $PUBLIC_IP"
+            exit 1
+          fi
           echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
 
 
