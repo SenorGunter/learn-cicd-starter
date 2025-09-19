@@ -31,15 +31,15 @@ resource "aws_instance" "notely_ec2" {
               usermod -a -G docker ec2-user
               aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
               docker pull ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository}:latest
-              docker run -d --restart unless-stopped -p 80:80 ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository}:latest
-              EOF
+              docker stop notely || true
+              docker rm notely || true
+              docker run -d --restart unless-stopped -p 80:80 --name notely ${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository}:latest
+              cd /
+              go build -o notely
+              ./notely &
+							EOF
 
   tags = {
     Name = "NotelyApp"
   }
-}
-
-# Output the automatically assigned public IP for GitHub Actions
-output "ec2_public_ip" {
-  value = aws_instance.notely_ec2.public_ip
 }
